@@ -83,3 +83,48 @@ for i in dts:
 data_with_thrust = np.array(range_with_thrust)
 data_with_thrust
 # %%
+#use the same model with a variable mass
+g = 9.81
+v0 = 100 
+angle = np.radians(60)
+thrust = 1000 # increase the thrust, launch speed and launch angle, and lower the mass to test the second loop
+
+def simulate_range_mass(dt, max_time = 100):
+    vy = v0 * np.sin(angle)
+    vx = v0 * np.cos(angle)
+    tx = thrust * np.cos(angle)
+    ty = thrust * np.sin(angle)
+    x, y, t = 0, 0, 0 
+    mass = 8  
+
+    while t < max_time:
+        y += vy * dt + 0.5 * ((ty/mass) - g) * dt**2
+        x += vx * dt + 0.5 * (tx/mass) * dt**2 
+        vy += ((ty/mass) - g) * dt 
+        vx += ((tx/mass)) * dt
+        t += dt
+        mass -= 1 * dt #assume that the loss of mass is linear  
+        if y < 0:
+            break
+        if mass <= 5: #add a loop that protects thrust from reaching infinity 
+            break 
+
+    while mass <= 5: #add a loop that simulates the rocket running out of fuel 
+        if y < 0: #ensure the loop has exit clauses 
+            break 
+        if t >= max_time:
+             break
+        y += vy * dt 
+        x += vx * dt 
+        vy -= g * dt 
+        t += dt
+    return round(x, 2), round(t, 2), max_time  
+
+for i in dts:
+    range_x, flight_time, max_time = simulate_range_mass(i) 
+    if flight_time >= max_time: 
+        print(f"dts = {i}, t = {flight_time} , range with variable mass = {range_x}, rocket not landed")
+    elif flight_time < max_time:
+        print(f"dts = {i}, t = {flight_time}, range with variable mass = {range_x}")
+# %%
+
